@@ -7,12 +7,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import javax.transaction.Transactional;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yeongzhiwei.assessment.dto.CreateFamilyMemberRequest;
+import com.yeongzhiwei.assessment.dto.CreateHouseholdRequest;
 import com.yeongzhiwei.assessment.model.Household;
 import com.yeongzhiwei.assessment.model.HousingType;
+import com.yeongzhiwei.assessment.model.Person;
+import com.yeongzhiwei.assessment.model.Person.Gender;
+import com.yeongzhiwei.assessment.model.Person.MartialStatus;
+import com.yeongzhiwei.assessment.model.Person.OccupationType;
 import com.yeongzhiwei.assessment.repository.HouseholdRepository;
+import com.yeongzhiwei.assessment.repository.PersonRepository;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +45,9 @@ public class HouseholdControllerTests {
     private HouseholdRepository householdRepository;
 
     @Autowired
+    private PersonRepository personRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private String[][] rawHouseholds = {{"LANDED"}, {"CONDOMINIUM"}, {"HDB"}};
@@ -49,8 +62,10 @@ public class HouseholdControllerTests {
     }
 
     @AfterEach
+    @Transactional
     void removeData() {
         householdRepository.deleteAll();
+        personRepository.deleteAll();
     }
     
     @Test
@@ -62,12 +77,12 @@ public class HouseholdControllerTests {
     
     @Test
     void createHousehold_Success() throws Exception {
-        Household household = new Household();
-        household.setHousingType(HousingType.CONDOMINIUM);
+        CreateHouseholdRequest request = new CreateHouseholdRequest();
+        request.setHousingType(HousingType.CONDOMINIUM);
 
         this.mockMvc.perform(post("/households")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(household)))
+                .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").exists());
 
@@ -85,11 +100,11 @@ public class HouseholdControllerTests {
 
     @Test
     void createHousehold_NullHousingType() throws Exception {
-        Household household = new Household();
+        CreateHouseholdRequest request = new CreateHouseholdRequest();
 
         this.mockMvc.perform(post("/households")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(household)))
+                .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
 
         assertEquals(rawHouseholds.length, householdRepository.count());
@@ -97,11 +112,7 @@ public class HouseholdControllerTests {
 
     @Test
     void getHousehold_Success() throws Exception {
-        Long validHouseholdId = householdRepository.findAll()
-                                    .stream()
-                                    .map(Household::getId)
-                                    .reduce((id1, id2) -> id1)
-                                    .get();
+        Long validHouseholdId = householdRepository.findAll().get(0).getId();
 
         this.mockMvc.perform(get("/households/" + validHouseholdId))
             .andExpect(status().isOk())
@@ -123,4 +134,80 @@ public class HouseholdControllerTests {
             .andExpect(status().isNotFound());
     }
 
+    @Test
+    void addFamilyMember_Success() throws Exception {
+        Household validHousehold = householdRepository.findAll().get(0);
+
+        Person person = new Person();
+        person.setName("Ah Lian");
+        person.setGender(Gender.MALE);
+        person.setMartialStatus(MartialStatus.MARRIED);
+        person.setOccupationType(OccupationType.EMPLOYED);
+        person.setAnnualIncome(100000);
+        person.setDob(LocalDate.now());
+        person.setHousehold(validHousehold);
+        person = personRepository.save(person);
+
+        CreateFamilyMemberRequest request = new CreateFamilyMemberRequest();
+        request.setName("Ah Low");
+        request.setGender(Gender.FEMALE);
+        request.setMartialStatus(MartialStatus.MARRIED);
+        request.setOccupationType(OccupationType.UNEMPLOYED);
+        request.setDob(LocalDate.now());
+        request.setSpouseId(person.getId());
+
+        this.mockMvc.perform(post("/households/" + validHousehold.getId() + "/familymembers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").exists())
+            .andExpect(jsonPath("$.spouseId").value(person.getId()));
+
+        assertEquals(2, personRepository.count());
+    }
+
+    @Test
+    void addFamilyMember_NonExistantHouseholdId() throws Exception {
+        List<Long> householdIds = householdRepository.findAll()
+                                    .stream()
+                                    .map(Household::getId)
+                                    .collect(toList());
+        Long invalidHouseholdId = 1L;
+        while (householdIds.contains(invalidHouseholdId)) {
+            invalidHouseholdId += 1;
+        }
+        CreateFamilyMemberRequest request = new CreateFamilyMemberRequest();
+        request.setName("Ah Lian");
+        request.setGender(Gender.MALE);
+        request.setMartialStatus(MartialStatus.SINGLE);
+        request.setOccupationType(OccupationType.EMPLOYED);
+        request.setAnnualIncome(100000);
+        request.setDob(LocalDate.now());
+
+        this.mockMvc.perform(post("/households/" + invalidHouseholdId + "/familymembers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void addFamilyMember_NonExistantSpouseId() throws Exception {
+        Long validHouseholdId = householdRepository.findAll().get(0).getId();
+        CreateFamilyMemberRequest request = new CreateFamilyMemberRequest();
+        request.setName("Ah Lian");
+        request.setGender(Gender.MALE);
+        request.setMartialStatus(MartialStatus.SINGLE);
+        request.setSpouseId(999L);
+        request.setOccupationType(OccupationType.EMPLOYED);
+        request.setAnnualIncome(100000);
+        request.setDob(LocalDate.now());
+
+        this.mockMvc.perform(post("/households/" + validHouseholdId + "/familymembers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+
+        assertEquals(0, personRepository.count());
+    }
+    
 }

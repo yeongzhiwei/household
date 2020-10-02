@@ -6,9 +6,12 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import com.yeongzhiwei.assessment.dto.CreateFamilyMemberRequest;
 import com.yeongzhiwei.assessment.dto.CreateHouseholdRequest;
+import com.yeongzhiwei.assessment.dto.FamilyMemberResponse;
 import com.yeongzhiwei.assessment.dto.HouseholdResponse;
 import com.yeongzhiwei.assessment.model.Household;
+import com.yeongzhiwei.assessment.model.Person;
 import com.yeongzhiwei.assessment.service.HouseholdService;
 
 import org.modelmapper.ModelMapper;
@@ -39,6 +42,16 @@ public class HouseholdController {
         Household household = modelMapper.map(request, Household.class);
         household = householdService.createHousehold(household);
         return modelMapper.map(household, HouseholdResponse.class);
+    }
+
+    @PostMapping(path = "/{householdId}/familymembers", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(code = HttpStatus.CREATED)
+    public FamilyMemberResponse addFamilyMember(
+            @PathVariable final Long householdId, 
+            @RequestBody @Valid final CreateFamilyMemberRequest request) {
+        Person familyMember = modelMapper.map(request, Person.class);
+        familyMember = householdService.addFamilyMember(householdId, familyMember, request.getSpouseId());
+        return modelMapper.map(familyMember, FamilyMemberResponse.class);
     }
 
     @GetMapping
