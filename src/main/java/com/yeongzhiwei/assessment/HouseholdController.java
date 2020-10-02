@@ -36,13 +36,9 @@ public class HouseholdController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(code = HttpStatus.CREATED)
     public HouseholdResponse createHousehold(@RequestBody @Valid final CreateHouseholdRequest request) {
-        Household household = new Household();
-        household.setHousingType(request.getHousingType());
+        Household household = modelMapper.map(request, Household.class);
         household = householdService.createHousehold(household);
-        HouseholdResponse response = new HouseholdResponse();
-        response.setId(household.getId());
-        response.setHousingType(household.getHousingType());
-        return response;
+        return modelMapper.map(household, HouseholdResponse.class);
     }
 
     @GetMapping
