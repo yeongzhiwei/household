@@ -69,4 +69,18 @@ public class HouseholdController {
         return modelMapper.map(household, HouseholdResponse.class);
     }
 
+    /* OPTIONAL END-POINTS */
+
+    @DeleteMapping("/{householdId}")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void deleteHousehold(@PathVariable Long householdId) {
+        householdService.removeHousehold(householdId);
+    }
+
+    @DeleteMapping("/{householdId}/familymembers/{familyMemberId}")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void deleteFamilyMember(@PathVariable Long householdId, @PathVariable Long familyMemberId) {
+        householdService.removeFamilyMember(householdId, familyMemberId);
+    }
+
 }
