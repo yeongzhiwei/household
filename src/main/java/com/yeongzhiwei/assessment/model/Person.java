@@ -15,7 +15,7 @@ import javax.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@Table(name="family_member")
+@Table(name="person")
 @Entity
 @Data
 @EqualsAndHashCode(callSuper = true, exclude = {"spouse", "household"})
