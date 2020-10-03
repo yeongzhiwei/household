@@ -1,6 +1,6 @@
 # Backend Technical Assessment
 
-Built using Spring Boot with Hibernate ORM/JPA, and in-memory H2 database. Used lombok, modelmapper, and Hibernate validation to reduce code boiletplates.
+Built using Spring Boot with Hibernate ORM/JPA, and in-memory H2 database. Used Project Lombok, ModelMapper, and Hibernate validation to reduce code boilerplates.
 
 ## How to run
 
