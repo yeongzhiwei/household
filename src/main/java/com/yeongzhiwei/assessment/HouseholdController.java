@@ -18,13 +18,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(path = "/households")
@@ -56,8 +50,12 @@ public class HouseholdController {
 
     @GetMapping
     @ResponseStatus(code = HttpStatus.OK)
-    public List<HouseholdResponse> getHouseholds() {
-        List<Household> households = householdService.getHouseholds();
+    public List<HouseholdResponse> getHouseholds(
+            @RequestParam(name = "income_gt", required = false) Integer incomeGt,
+            @RequestParam(name = "income_lt", required = false) Integer incomeLt,
+            @RequestParam(name = "age_gt", required = false) Integer ageGt,
+            @RequestParam(name = "age_lt", required = false) Integer ageLt) {
+        List<Household> households = householdService.getHouseholds(incomeGt, incomeLt, ageGt, ageLt);
         return households.stream()
             .map(household -> modelMapper.map(household, HouseholdResponse.class))
             .collect(toList());

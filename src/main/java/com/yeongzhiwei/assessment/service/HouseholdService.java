@@ -10,7 +10,11 @@ import com.yeongzhiwei.assessment.repository.HouseholdRepository;
 import com.yeongzhiwei.assessment.repository.PersonRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import static com.yeongzhiwei.assessment.repository.HouseholdSpecs.householdIncomeGreaterThan;
+import static com.yeongzhiwei.assessment.repository.HouseholdSpecs.householdIncomeLessThan;
 
 @Service
 public class HouseholdService {
@@ -31,8 +35,17 @@ public class HouseholdService {
         return householdRepository.findById(householdId).orElseThrow(HouseholdNotFoundException::new);
     }
 
-    public List<Household> getHouseholds() {
-        return householdRepository.findAll();
+    public List<Household> getHouseholds(
+            Integer incomeGt, Integer incomeLt,
+            Integer ageGt, Integer ageLt) {
+        Specification<Household> spec = Specification.where(null);
+        if (incomeGt != null) {
+            spec = spec.and(householdIncomeGreaterThan(incomeGt));
+        }
+        if (incomeLt != null) {
+            spec = spec.and(householdIncomeLessThan(incomeLt));
+        }
+        return householdRepository.findAll(spec);
     }
 
 	public Person addFamilyMember(Long householdId, Person familyMember, Long spouseId) {
