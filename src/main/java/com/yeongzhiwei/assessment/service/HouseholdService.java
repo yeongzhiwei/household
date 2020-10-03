@@ -1,5 +1,6 @@
 package com.yeongzhiwei.assessment.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.yeongzhiwei.assessment.exception.HouseholdNotFoundException;
@@ -13,8 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import static com.yeongzhiwei.assessment.repository.HouseholdSpecs.householdIncomeGreaterThan;
-import static com.yeongzhiwei.assessment.repository.HouseholdSpecs.householdIncomeLessThan;
+import static com.yeongzhiwei.assessment.repository.HouseholdSpecs.*;
 
 @Service
 public class HouseholdService {
@@ -44,6 +44,14 @@ public class HouseholdService {
         }
         if (incomeLt != null) {
             spec = spec.and(householdIncomeLessThan(incomeLt));
+        }
+        if (ageGt != null) {
+            LocalDate date = LocalDate.now().minusYears(ageGt);
+            spec = spec.and(hasPersonOlderThan(date));
+        }
+        if (ageLt != null) {
+            LocalDate date = LocalDate.now().minusYears(ageLt);
+            spec = spec.and(hasPersonYoungerThan(date));
         }
         return householdRepository.findAll(spec);
     }

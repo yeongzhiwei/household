@@ -4,7 +4,10 @@ import javax.persistence.criteria.*;
 
 import com.yeongzhiwei.assessment.model.*;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
+
+import java.time.LocalDate;
 
 public class HouseholdSpecs {
 
@@ -25,6 +28,37 @@ public class HouseholdSpecs {
 
         incomeSubquery.select(builder.sum(personRoot.get(Person_.ANNUAL_INCOME)));
         return incomeSubquery;
+    }
+
+    public static Specification<Household> hasPersonOlderThan(LocalDate date) {
+        return (root, query, builder) -> {
+            Subquery<Long> personSubquery = query.subquery(Long.class);
+            Root<Person> personRoot = personSubquery.from(Person.class);
+
+            Join<Person, Household> personHouseholdJoin = personRoot.join(Person_.HOUSEHOLD);
+            personSubquery.where(
+                    builder.equal(personHouseholdJoin.get(Household_.ID), root.get(Household_.ID)),
+                    builder.lessThan(personRoot.get(Person_.DOB), date)
+            );
+            personSubquery.select(builder.count(personRoot.get(Person_.DOB)));
+
+            return builder.greaterThan(personSubquery, 0L);
+        };
+    }
+    public static Specification<Household> hasPersonYoungerThan(LocalDate date) {
+        return (root, query, builder) -> {
+            Subquery<Long> personSubquery = query.subquery(Long.class);
+            Root<Person> personRoot = personSubquery.from(Person.class);
+
+            Join<Person, Household> personHouseholdJoin = personRoot.join(Person_.HOUSEHOLD);
+            personSubquery.where(
+                    builder.equal(personHouseholdJoin.get(Household_.ID), root.get(Household_.ID)),
+                    builder.greaterThan(personRoot.get(Person_.DOB), date)
+            );
+            personSubquery.select(builder.count(personRoot.get(Person_.DOB)));
+
+            return builder.greaterThan(personSubquery, 0L);
+        };
     }
 
 }
