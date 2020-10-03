@@ -50,6 +50,7 @@ public class HouseholdControllerTests {
     @Autowired
     private ObjectMapper objectMapper;
 
+    // Warning: updating test data? Make sure you update the assertions in tests too
     private String[][] rawHouseholds = {{"LANDED"}, {"CONDOMINIUM"}, {"HDB"}, {"HDB"}, {"HDB"}, {"HDB"}};
     private String[][][] rawFamilyMembersHouseholds = {
             // husband/wife; income > $100k/$150k; age < 5/16 yo
@@ -81,6 +82,7 @@ public class HouseholdControllerTests {
     }
 
     @BeforeEach
+    @Transactional
     void seedData() {
         for (int i = 0; i < rawHouseholds.length; i++) {
             String[] rawHousehold = rawHouseholds[i];
@@ -130,7 +132,35 @@ public class HouseholdControllerTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(rawHouseholds.length));
     }
-    
+
+    @Test
+    void getHouseholds_incomeLessThan150000_youngerThan16yo() throws Exception {
+        this.mockMvc.perform(get("/households?income_lt=150000&age_lt=16"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void getHouseholds_olderThan50yo() throws Exception {
+        this.mockMvc.perform(get("/households?age_gt=50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void getHouseholds_youngerThan5yo() throws Exception {
+        this.mockMvc.perform(get("/households?age_lt=5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void getHouseholds_incomeLessThan100000() throws Exception {
+        this.mockMvc.perform(get("/households?income_lt=100000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(5));
+    }
+
     @Test
     void createHousehold_Success() throws Exception {
         CreateHouseholdRequest request = new CreateHouseholdRequest();
