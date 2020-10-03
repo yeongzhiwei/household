@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -105,18 +106,17 @@ public class HouseholdControllerTests {
                 familyMember.setAnnualIncome(Integer.valueOf(rawFamilyMember[4]));
                 familyMember.setDob(LocalDate.parse(rawFamilyMember[5]));
                 familyMember.setHousehold(household);
+                Person savedPerson = personRepository.save(familyMember);
 
                 if (rawFamilyMember[2].equals(Person.MartialStatus.MARRIED.name())) {
                     if (spouse == null) {
                         spouse = familyMember;
                     } else {
-                        familyMember.setSpouse(spouse);
+                        savedPerson.setSpouse(spouse);
+                        spouse.setSpouse(savedPerson);
+                        personRepository.saveAll(Arrays.asList(savedPerson, spouse));
                         spouse = null;
                     }
-                }
-                Person savedPerson = personRepository.save(familyMember);
-                if (spouse != null) {
-                    spouse = savedPerson;
                 }
             }
         }
