@@ -45,6 +45,7 @@ public class HouseholdSpecs {
             return builder.greaterThan(personSubquery, 0L);
         };
     }
+
     public static Specification<Household> hasPersonYoungerThan(LocalDate date) {
         return (root, query, builder) -> {
             Subquery<Long> personSubquery = query.subquery(Long.class);
@@ -58,6 +59,22 @@ public class HouseholdSpecs {
             personSubquery.select(builder.count(personRoot.get(Person_.DOB)));
 
             return builder.greaterThan(personSubquery, 0L);
+        };
+    }
+
+    public static Specification<Household> hasCouple() {
+        return (root, query, builder) -> {
+            Subquery<Long> personSubquery = query.subquery(Long.class);
+            Root<Person> personRoot = personSubquery.from(Person.class);
+
+            Join<Person, Household> personHouseholdJoin = personRoot.join(Person_.HOUSEHOLD);
+            personSubquery.where(
+                    builder.equal(personHouseholdJoin.get(Household_.ID), root.get(Household_.ID)),
+                    builder.isNotNull(personRoot.get(Person_.SPOUSE))
+            );
+            personSubquery.select(builder.count(personRoot.get(Person_.SPOUSE)));
+
+            return builder.greaterThanOrEqualTo(personSubquery, 1L);
         };
     }
 

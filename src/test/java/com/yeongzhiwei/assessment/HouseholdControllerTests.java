@@ -144,6 +144,13 @@ public class HouseholdControllerTests {
     }
 
     @Test
+    void getHouseholds_couple_youngerThan18yo() throws Exception {
+        this.mockMvc.perform(get("/households?age_lt=18&couple=true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
     void getHouseholds_olderThan50yo() throws Exception {
         this.mockMvc.perform(get("/households?age_gt=50"))
                 .andExpect(status().isOk())

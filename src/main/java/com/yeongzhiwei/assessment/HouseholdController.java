@@ -41,7 +41,7 @@ public class HouseholdController {
     @PostMapping(path = "/{householdId}/familymembers", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(code = HttpStatus.CREATED)
     public FamilyMemberResponse addFamilyMember(
-            @PathVariable final Long householdId, 
+            @PathVariable final Long householdId,
             @RequestBody @Valid final CreateFamilyMemberRequest request) {
         Person familyMember = modelMapper.map(request, Person.class);
         familyMember = householdService.addFamilyMember(householdId, familyMember, request.getSpouseId());
@@ -54,8 +54,9 @@ public class HouseholdController {
             @RequestParam(name = "income_gt", required = false) Integer incomeGt,
             @RequestParam(name = "income_lt", required = false) Integer incomeLt,
             @RequestParam(name = "age_gt", required = false) Integer ageGt,
-            @RequestParam(name = "age_lt", required = false) Integer ageLt) {
-        List<Household> households = householdService.getHouseholds(incomeGt, incomeLt, ageGt, ageLt);
+            @RequestParam(name = "age_lt", required = false) Integer ageLt,
+            @RequestParam(name = "couple", required = false) String couple) {
+        List<Household> households = householdService.getHouseholds(incomeGt, incomeLt, ageGt, ageLt, couple != null);
         return households.stream()
             .map(household -> modelMapper.map(household, HouseholdResponse.class))
             .collect(toList());

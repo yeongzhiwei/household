@@ -37,7 +37,8 @@ public class HouseholdService {
 
     public List<Household> getHouseholds(
             Integer incomeGt, Integer incomeLt,
-            Integer ageGt, Integer ageLt) {
+            Integer ageGt, Integer ageLt,
+            boolean hasCouple) {
         Specification<Household> spec = Specification.where(null);
         if (incomeGt != null) {
             spec = spec.and(householdIncomeGreaterThan(incomeGt));
@@ -52,6 +53,9 @@ public class HouseholdService {
         if (ageLt != null) {
             LocalDate date = LocalDate.now().minusYears(ageLt);
             spec = spec.and(hasPersonYoungerThan(date));
+        }
+        if (hasCouple) {
+            spec = spec.and(hasCouple());
         }
         return householdRepository.findAll(spec);
     }
