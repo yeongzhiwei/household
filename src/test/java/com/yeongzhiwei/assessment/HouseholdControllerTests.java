@@ -84,6 +84,9 @@ public class HouseholdControllerTests {
     @BeforeEach
     @Transactional
     void seedData() {
+        householdRepository.deleteAll();
+        personRepository.deleteAll();
+
         for (int i = 0; i < rawHouseholds.length; i++) {
             String[] rawHousehold = rawHouseholds[i];
             String[][] rawFamilyMembersHousehold = rawFamilyMembersHouseholds[i];
